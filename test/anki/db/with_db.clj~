@@ -1,0 +1,15 @@
+(ns anki.db.with-db
+  (:require  [anki.db.core :as sut]))
+
+(def ^:dynamic *conn* nil)
+
+(defn fresh-db []
+  (let [db-uri (str "datomic:mem://" (gensym))
+        conn (sut/create-conn db-uri)]
+    conn))
+
+;;;
+
+(defn with-db [f]
+  (binding [*conn* (fresh-db)]
+    (f)))

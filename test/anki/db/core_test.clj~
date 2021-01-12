@@ -1,0 +1,12 @@
+(ns anki.db.core-test
+  (:require [anki.db.core :as sut]
+            [datomic.api :as d]
+            [clojure.test :refer [is deftest testing]]))
+
+;;; SUT => Software Under Test
+
+(deftest conn
+  (testing "create-conn"
+    (let [db-uri (str "datomic:mem://" (gensym))
+          conn (SUT/create-conn db-uri)]
+      (is (nil? conn)))))
