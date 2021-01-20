@@ -11,8 +11,6 @@
     (d/transact conn schema)
     conn))
 
-;;;
-
 (defn with-db [f]
   (binding [*conn* (fresh-db)]
     (f)))

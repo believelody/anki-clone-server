@@ -1,7 +1,10 @@
 (ns anki.db.core
-  (:require [datomic.api :as d]
-            [anki.db.schema :refer [schema]]))
+  (:require
+   [datomic.api :as d]
+   [config.core :refer [env reload-env]]
+   [anki.db.schema :refer [schema]]))
 
+(:databse-uri env)
 
 (def database-uri "datomic:free://localhost:4334/anki")
 
@@ -15,4 +18,5 @@
 (def tx @(d/transact conn schema))
 
 (comment
-  tx)
+  (reload-env)
+  (System/getenv "database-uri"))
