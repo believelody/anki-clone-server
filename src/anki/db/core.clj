@@ -1,7 +1,8 @@
 (ns anki.db.core
   (:require
    [datomic.api :as d]
-   [config.core :refer [env reload-env]]
+   [mount.core :as mount :refer [defstate]]
+   [anki.db.config :refer [env]]
    [anki.db.schema :refer [schema]]))
 
 (:databse-uri env)
@@ -13,10 +14,6 @@
   (let [conn (d/connect db-uri)]
     conn))
 
-(def conn (create-conn database-uri))
-
-(def tx @(d/transact conn schema))
-
-(comment
-  (reload-env)
-  (System/getenv "database-uri"))
+(defstate conn
+  :start (create-conn database-uri)
+  :stop (.release conn))
