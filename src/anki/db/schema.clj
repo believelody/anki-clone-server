@@ -15,6 +15,10 @@
     :db/valueType :db.type/string
     :db/cardinality :db.cardinality/one
     :db/doc "Username of the User"}
+   {:db/ident :user/password
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc "Hashed Password of the User"}
    {:db/ident :user/token
     :db/valueType :db.type/string
     :db/cardinality :db.cardinality/one
