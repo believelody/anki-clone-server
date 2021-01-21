@@ -65,13 +65,13 @@
   (if (fetch-by-id (d/db conn) user-id)
     (let [tx-data (merge user-params {:user/id user-id})
           db-after (:db-after @(d/transact conn [tx-data]))]
-      (fetch db-after user-id))
+      (fetch-by-id db-after user-id))
     (throw (ex-info "Unable to update user"
                     {:anki/error-id :server-error
                      :error "Unable to edit user"}))))
 
 (defn delete! [conn user-id]
-  (when-let [user (fetch (d/db conn) user-id)]
+  (when-let [user (fetch-by-id (d/db conn) user-id)]
     (d/transact conn [[:db/retractEntity [:user/id user-id]]])
     user))
 
