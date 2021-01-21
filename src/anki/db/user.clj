@@ -22,7 +22,7 @@
 (s/def :user/token (s/with-gen
                      string?
                      #(s/gen #{"token1" "token2" "token3"})))
-(s/def :user/id string?)
+(s/def :user/id uuid?)
 
 (gen/generate (s/gen :user/email))
 (gen/generate (s/gen :user/password))
