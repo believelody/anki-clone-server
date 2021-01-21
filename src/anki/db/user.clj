@@ -2,6 +2,7 @@
   (:require [datomic.api :as d]
             [clojure.string :as str]
             [clojure.spec.alpha :as s]
+            [anki.db.core :refer [conn]]
             [clojure.test.check.generators :as gen]))
 
 (defn validate-email [email]
@@ -24,6 +25,10 @@
                      #(s/gen #{"token1" "token2" "token3"})))
 (s/def :user/id uuid?)
 
+(s/def ::user
+  (s/keys :req [:user/email :user/password]
+          :opt [:user/id :user/id :user/username]))
+
 (gen/generate (s/gen :user/email))
 (gen/generate (s/gen :user/password))
 (gen/generate (s/gen :user/username))
@@ -34,10 +39,6 @@
 ;; (s/explain :user/email "madamada")
 ;; (s/conform :user/email "madamada")
 
-(s/def ::user
-  (s/keys :req [:user/email :user/password]
-          :opt [:user/id :user/id :user/username]))
-
 (def sample-user {:user/email "john@doe.com"
                   :user/password "1234"})
 
@@ -46,9 +47,35 @@
 (defn create! [conn user-params]
   (if (s/valid? ::user user-params)
     (let [user-id (d/squuid)
-          tx-data (merge {:user/id user-id} user-params)]
+          tx-data (merge user-params {:user/id user-id})]
       (d/transact conn [tx-data])
       user-id)
     (throw (ex-info "User is invalid"
                     {:anki/error-id :validation
                      :error "Invalid email or password provided"}))))
+
+(defn fetch-by-id [db user-id]
+  (d/q '[:find (pull ?uid [*]) .
+         :in $ ?user-id
+         :where [?uid :user/id ?user-id]]
+       (d/db conn)
+       user-id))
+
+(defn edit! [conn user-id user-params]
+  (if (fetch-by-id (d/db conn) user-id)
+    (let [tx-data (merge user-params {:user/id user-id})
+          db-after (:db-after @(d/transact conn [tx-data]))]
+      (fetch db-after user-id))
+    (throw (ex-info "Unable to update user"
+                    {:anki/error-id :server-error
+                     :error "Unable to edit user"}))))
+
+(defn delete! [conn user-id]
+  (when-let [user (fetch (d/db conn) user-id)]
+    (d/transact conn [[:db/retractEntity [:user/id user-id]]])
+    user))
+
+(comment
+  (create! conn sample-user)
+  (d/db conn)
+  (fetch-by-id (d/db conn) #uuid "60093baf-bc5a-4fbd-a441-2ca97c28b24e"))
