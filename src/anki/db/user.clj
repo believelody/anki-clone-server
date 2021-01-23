@@ -54,6 +54,7 @@
                     {:anki/error-id :validation
                      :error "Invalid email or password provided"}))))
 
+;; Passing a . after find clause returns a single item
 (defn fetch-by-id [db user-id]
   (d/q '[:find (pull ?uid [*]) .
          :in $ ?user-id
