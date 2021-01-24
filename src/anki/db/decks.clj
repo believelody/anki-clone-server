@@ -9,11 +9,12 @@
 (s/def :deck/id uuid?)
 (s/def :deck/title (s/and string? #(seq %)))
 (s/def :deck/tags (s/coll-of string?
-                             :kind set?
+                             :kind vector?
+                             :distinct true
                              :min-count 0))
 (s/def ::deck
   (s/keys
-   :req [:deck/title]
+   :req [:deck/title :deck/tags]
    :opt [:deck/id]))
 
 (gen/generate (s/gen ::deck))
@@ -56,4 +57,7 @@
                     {:anki/error-id :server-error
                      :error "Unable to update deck"}))))
 
-(defn delete! [conn user-id deck-id])
+(defn delete! [conn user-id deck-id]
+  (when-let [deleted-deck (fetch-by-id (d/db conn) user-id deck-id)]
+    (d/transact conn [[:db/retractEntity [:deck/id deck-id]]])
+    deleted-deck))

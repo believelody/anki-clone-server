@@ -56,4 +56,11 @@
           deck-id (sut/create! *conn* user-id new-deck)
           deck-params {:deck/title "Learning datomic"}
           edited-deck (sut/edit! *conn* user-id deck-id deck-params)]
-      (is (:deck/title deck-params) (:deck/title edited-deck)))))
+      (is (:deck/title deck-params) (:deck/title edited-deck))))
+  (testing "delete!, delete an existing deck"
+    (let [user-params (gen/generate (s/gen ::u/user))
+          user-id (u/create! *conn* user-params)
+          deck-id (sut/create! *conn* user-id (gen/generate (s/gen ::sut/deck)))
+          deleted-deck (sut/delete! *conn* user-id deck-id)]
+      (is (= true (s/valid? ::sut/deck deleted-deck)))
+      (is (= nil (sut/fetch-by-id (d/db *conn*) user-id deck-id))))))
