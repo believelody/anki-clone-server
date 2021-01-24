@@ -17,3 +17,6 @@
 (defstate conn
   :start (create-conn database-uri)
   :stop (.release conn))
+
+(comment
+  (def tx @(d/transact conn schema)))
