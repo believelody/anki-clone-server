@@ -31,3 +31,29 @@
          [?card :card/id ?card-id]
          [?card :card/deck ?deck]]
        db deck-id card-id))
+
+(defn create! [conn deck-id card-params]
+  (if (spec/valid? ::card card-params)
+    (let [card-id (d/squuid)
+          tx-data (-> card-params
+                      (assoc :card/deck [:deck/id deck-id])
+                      (assoc :card/id card-id))]
+      (d/transact conn [tx-data])
+      card-id)
+    (throw (ex-info "Card is invalid"
+                    {:anki/error-id :validation
+                     :error "Invalid card input values"}))))
+
+(defn edit! [conn deck-id card-id card-params]
+  (if (fetch-by-id (d/db conn) deck-id card-id)
+    (let [tx-data (merge card-params {:card/id card-id})
+          db-after (:db-after @(d/transact conn [tx-data]))]
+      (fetch-by-id db-after deck-id card-id))
+    (throw (ex-info "Update card failed"
+                    {:anki/error-id :server-error
+                     :error "Unable to update card"}))))
+
+(defn delete! [conn deck-id card-id]
+  (when-let [deleted-card (fetch-by-id (d/db conn) deck-id card-id)]
+    (d/transact conn [[:db/retractEntity [:card/id card-id]]])
+    deleted-card))
