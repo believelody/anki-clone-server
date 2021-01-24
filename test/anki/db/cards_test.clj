@@ -52,4 +52,28 @@
                       :card/back "A programming language"}]
         @(dtm/transact *conn* [new-card])
         (let [card (sut/fetch-by-id (dtm/db *conn*) 1 2)]
-          (is (nil? card)))))))
+          (is (nil? card)))))
+  (testing "create!, create a new deck"
+    (let [new-deck (merge (gen/generate (spec/gen ::sut/deck)))
+          deck-id (sut/create! *conn* user-id new-deck)
+          new-card {:card/id (dtm/squuid)
+                    :card/deck [:deck/id deck-id]
+                    :card/front "What is clojure ?"
+                    :card/back "A programming language"}
+          card-id (sut/create! *conn* deck-id new-card)]
+      (is (uuid? card-id))))
+  (testing "edit!, edits an existing deck and returns the updated card"
+    (let [new-deck (gen/generate (spec/gen ::d/deck))
+          deck-id (sut/create! *conn* user-id new-deck)
+          new-card {:card/deck [:decl/id deck-id]
+                       :card/front "What is Clojure ?"
+                       :card/back "A programming language"}
+          card-id (sut/create! *conn* deck-id new-card)
+          edited-card (sut/edit! *conn* deck-id card-id {:card/back "A functional programming language"})]
+      (is (spec/valid? ::sut/card edited-card))))
+  (testing "delete!, delete an existing deck"
+    (let [deck-id (d/create! *conn* user-id (gen/generate (spec/gen ::d/deck)))
+          card-id (sut/create! *conn* deck-id (gen/generate (spec/gen ::sut/card)))
+          deleted-card (sut/delete! *conn* deck-id card-id)]
+      (is (= true (spec/valid? ::sut/card deleted-card)))
+      (is (= nil (sut/fetch-by-id (dtm/db *conn*) deck-id card-id)))))))
