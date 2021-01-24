@@ -36,8 +36,24 @@
          [?deck :deck/author ?user]]
        db user-id deck-id))
 
-(defn create! [conn user-id deck-params])
+(defn create! [conn user-id deck-params]
+  (if (s/valid? ::deck deck-params)
+    (let [deck-id (d/squuid)
+          tx-data (merge deck-params {:deck/author [:user/id user-id]
+                                      :deck/id deck-id})]
+      (d/transact conn [tx-data])
+      deck-id)
+    (throw (ex-info "Deck is invalid"
+                    {:anki/error-id :validation
+                     :error "Invalid deck input values"}))))
 
-(defn edit! [conn user-id deck-id deck-params])
+(defn edit! [conn user-id deck-id deck-params]
+  (if (fetch-by-id (d/db conn) user-id deck-id)
+    (let [tx-data (merge deck-params {:deck/id deck-id})
+          db-after (:db-after @(d/transact conn [tx-data]))]
+      (fetch-by-id db-after user-id deck-id))
+    (throw (ex-info "Update deck failed"
+                    {:anki/error-id :server-error
+                     :error "Unable to update deck"}))))
 
 (defn delete! [conn user-id deck-id])

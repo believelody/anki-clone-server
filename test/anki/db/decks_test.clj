@@ -42,4 +42,18 @@
           user-id (u/create! *conn* user-params)
           deck (sut/fetch-by-id (d/db *conn*) user-id deck-id)]
       (is (= false (map? deck)))
-      (is (= true (nil? deck))))))
+      (is (= true (nil? deck)))))
+  (testing "create!, create a new deck"
+    (let [user-params (gen/generate (s/gen ::u/user))
+          user-id (u/create! *conn* user-params)
+          new-deck (merge (gen/generate (s/gen ::sut/deck)))
+          deck-id (sut/create! *conn* user-id new-deck)]
+      (is (uuid? deck-id))))
+  (testing "edit!, edit an existing deck"
+    (let [user-params (gen/generate (s/gen ::u/user))
+          user-id (u/create! *conn* user-params)
+          new-deck (gen/generate (s/gen ::sut/deck))
+          deck-id (sut/create! *conn* user-id new-deck)
+          deck-params {:deck/title "Learning datomic"}
+          edited-deck (sut/edit! *conn* user-id deck-id deck-params)]
+      (is (:deck/title deck-params) (:deck/title edited-deck)))))
