@@ -3,10 +3,7 @@
             [clojure.tools.namespace.repl :as tn]
             [anki.db.core]))
 
-(defn refresh-ns
-  "Refresh/reloads all namespaces"
-  []
-  (tn/refresh-all))
+(tn/refresh-all)
 
 (defn start
   "Mount starts lifecycle of runtime state"
@@ -20,7 +17,6 @@
 
 (defn restart-dev []
   (stop)
-  (refresh-ns)
   (start))
 
 (comment
