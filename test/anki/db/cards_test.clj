@@ -22,12 +22,34 @@
       (let [new-deck (merge (gen/generate (spec/gen ::d/deck)))
             deck-id (d/create! *conn* user-id new-deck)
             new-card {:card/id (dtm/squuid)
-                       :card/deck [:deck/id deck-id]
-                       :card/front "What is clojure ?"
-                       :card/back "A programming language"}]
+                      :card/deck [:deck/id deck-id]
+                      :card/front "What is clojure ?"
+                      :card/back "A programming language"}]
         @(dtm/transact *conn* [new-card])
         (let [cards (sut/browse (dtm/db *conn*) deck-id)
               card (first cards)]
           (is (seq cards))
           (is (spec/valid? ::sut/card))
-          (is (vector? cards)))))))
+          (is (vector? cards)))))
+    (testing "fetch-by-id, return a card by ID from a deck"
+      (let [new-deck (merge (gen/generate (spec/gen ::d/deck)))
+            deck-id (d/create! *conn* user-id new-deck)
+            new-card-id (dtm/squuid)
+            new-card {:card/id new-card-id
+                      :card/deck [:deck/id deck-id]
+                      :card/front "What is clojure ?"
+                      :card/back "A programming language"}]
+        @(dtm/transact *conn* [new-card])
+        (let [card (sut/fetch-by-id (dtm/db *conn*) deck-id new-card-id)]
+          (is (spec/valid? ::sut/card card)))))
+    (testing "fetch-by-id, return nil if not found"
+      (let [new-deck (merge (gen/generate (spec/gen ::d/deck)))
+            deck-id (d/create! *conn* user-id new-deck)
+            new-card-id (dtm/squuid)
+            new-card {:card/id new-card-id
+                      :card/deck [:deck/id deck-id]
+                      :card/front "What is clojure ?"
+                      :card/back "A programming language"}]
+        @(dtm/transact *conn* [new-card])
+        (let [card (sut/fetch-by-id (dtm/db *conn*) 1 2)]
+          (is (nil? card)))))))

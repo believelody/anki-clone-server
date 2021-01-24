@@ -15,10 +15,19 @@
 
 (gen/generate (spec/gen ::card))
 
-(defn browse [db deck-id card-id]
+(defn browse [db deck-id]
   (d/q '[:find [(pull ?cards [*]) ...]
          :in $ ?deck-id
          :where
          [?deck :deck/id ?deck-id]
          [?cards :card/deck ?deck]]
        db deck-id))
+
+(defn fetch-by-id [db deck-id card-id]
+  (d/q '[:find [(pull ?card [*]) .]
+         :in $ ?deck-id ?card-id
+         :where
+         [?deck :deck/id ?deck-id]
+         [?card :card/id ?card-id]
+         [?card :card/deck ?deck]]
+       db deck-id card-id))
